@@ -149,11 +149,17 @@
             })
             .then((files) => {
               clearData();
+              msg("计算中...");
+              var j = 1;
               for (var i = 0; i < files.length; i++) {
                 const file = files[i];
                 window.preload.createMd5(file).then((md5) => {
                   handleData(file, md5);
                   showResult();
+                  if (j == files.length) {
+                    closeMsg();
+                  }
+                  j++;
                 });
               }
             });
@@ -205,11 +211,17 @@
 
       function handleFiles(files) {
         clearData();
+        msg("计算中...");
+        var j = 1;
         for (var i = 0; i < files.length; i++) {
           const file = files[i];
           window.preload.createMd5(file.path).then((md5) => {
             handleData(file.path, md5);
             showResult();
+            if (j == files.length) {
+              closeMsg();
+            }
+            j++;
           });
         }
       }
@@ -221,11 +233,17 @@
           });
           if (files && files.length > 0) {
             clearData();
+            msg("计算中...");
+            var j = 1;
             for (var i = 0; i < files.length; i++) {
               const file = files[i];
               window.preload.createMd5(file).then((md5) => {
                 handleData(file, md5);
                 showResult();
+                if (j == files.length) {
+                  closeMsg();
+                }
+                j++;
               });
             }
           }
@@ -255,16 +273,19 @@
 
         ne.addEventListener("click", function () {
           utools.copyText(md5);
-          msg("MD5复制成功");
+          msg("MD5复制成功", true);
         });
       }
-      function msg(txt) {
+      function msg(txt, autoC) {
         var notification = document.getElementById("notification");
         notification.innerHTML = `${txt}`;
         notification.classList.remove("hidden");
-        setTimeout(() => {
-          notification.classList.add("hidden");
-        }, 1500);
+        if (autoC) {
+          setTimeout(closeMsg, 1500);
+        }
+      }
+      function closeMsg() {
+        notification.classList.add("hidden");
       }
     </script>
   </body>
