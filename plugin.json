@@ -1,0 +1,38 @@
+{
+    "pluginName": "文件MD5检测",
+    "description": "文件MD5检测",
+    "author": "Swifly",
+    "main": "index.html",
+    "preload": "preload.js",
+    "logo": "logo.png",
+    "platform": [
+        "win32",
+        "darwin",
+        "linux"
+    ],
+    "pluginSetting": {
+        "single": false
+    },
+    "features": [
+        {
+            "code": "main",
+            "explain": "文件MD5检测",
+            "cmds": [
+                "文件MD5检测",
+                "MD5检测",
+                "MD5"
+            ]
+        },
+        {
+            "code": "file",
+            "explain": "文件MD5检测",
+            "cmds": [
+                {
+                    "type": "files",
+                    "label": "文件MD5检测",
+                    "fileType": "file"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <link rel="icon" href="./logo.png" />
+    <title>文件MD5检测</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        background: #fff;
+      }
+      .dark-mode {
+        background: #202124;
+      }
+      #drop_area {
+        width: 100%;
+        height: 100%;
+        padding: 40px;
+        cursor: pointer;
+      }
+      .dark-mode .tip {
+        color: #eee;
+      }
+      .bdr {
+        width: 100%;
+        height: 100%;
+        border-radius: 20px;
+        border: 1px dashed #aaa;
+        text-align: center;
+        display: grid;
+        place-items: center;
+      }
+      .tip {
+        font-size: 18px;
+      }
+      #result {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        left: 0;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.5) !important;
+        display: grid;
+        place-items: center;
+        padding: 40px;
+      }
+      #result-main {
+        margin: 0 auto;
+        width: 80%;
+        height: 80%;
+        border-radius: 20px;
+        box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+        background: #eee;
+        z-index: 1001;
+        position: relative;
+      }
+      #result-close {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 40px;
+        box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+        text-align: center;
+        line-height: 40px;
+      }
+      #result-close:hover {
+        border-radius: 0 0 20px 20px;
+        background: #ddd;
+        cursor: pointer;
+      }
+      #result-title {
+        position: absolute;
+        top: 0;
+        width: 100%;
+        height: 40px;
+        box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+        text-align: center;
+        line-height: 40px;
+      }
+      #result-data {
+        position: absolute;
+        top: 40px;
+        bottom: 40px;
+        width: 100%;
+        padding: 20px;
+        overflow: auto;
+        line-height: 25px;
+      }
+      .result-li {
+        box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+        padding: 10px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+      }
+      .result-li:hover {
+        border-radius: 10px;
+        background: rgba(0, 0, 0, 0.08);
+        cursor: pointer;
+      }
+      .notification {
+        width: 100%;
+        padding: 10px;
+        background-color: #4caf50;
+        color: white;
+        text-align: center;
+        position: fixed;
+        top: 0;
+        z-index: 9999;
+        margin: auto;
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="notification" class="notification hidden"></div>
+    <div id="result">
+      <div id="result-main">
+        <div id="result-title">检测结果(点击复制)</div>
+        <div id="result-data"></div>
+        <div id="result-close">关闭</div>
+      </div>
+    </div>
+    <div id="drop_area">
+      <div class="bdr">
+        <div class="tip">点击选择文件或拖拽文件到窗口</div>
+      </div>
+    </div>
+    <script>
+      utools.onPluginEnter(({ code, type, payload }) => {
+        if (code === "file") {
+          Promise.resolve(payload)
+            .then((payload) => {
+              const files = payload.map((item) => item.path);
+              if (!files || !files.length) return [];
+              return files;
+            })
+            .then((files) => {
+              clearData();
+              for (var i = 0; i < files.length; i++) {
+                const file = files[i];
+                window.preload.createMd5(file).then((md5) => {
+                  handleData(file, md5);
+                  showResult();
+                });
+              }
+            });
+        }
+      });
+      hideResult();
+      document.body.className = utools.isDarkColors() ? "dark-mode" : "";
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", (e) => {
+          document.body.className = e.matches ? "dark-mode" : "";
+        });
+
+      const dropArea = document.getElementById("drop_area");
+
+      ["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+      });
+
+      ["dragenter", "dragover"].forEach((eventName) => {
+        dropArea.addEventListener(eventName, highlight, false);
+      });
+
+      ["dragleave", "drop"].forEach((eventName) => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+      });
+
+      dropArea.addEventListener("drop", handleDrop, false);
+
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      function highlight(e) {
+        dropArea.style.backgroundColor = "#888";
+      }
+
+      function unhighlight(e) {
+        dropArea.style.backgroundColor = null;
+      }
+
+      function handleDrop(e) {
+        var dt = e.dataTransfer;
+        var files = dt.files;
+
+        handleFiles(files);
+      }
+
+      function handleFiles(files) {
+        clearData();
+        for (var i = 0; i < files.length; i++) {
+          const file = files[i];
+          window.preload.createMd5(file.path).then((md5) => {
+            handleData(file.path, md5);
+            showResult();
+          });
+        }
+      }
+      document
+        .getElementById("drop_area")
+        .addEventListener("click", function () {
+          const files = utools.showOpenDialog({
+            properties: ["multiSelections"],
+          });
+          if (files && files.length > 0) {
+            clearData();
+            for (var i = 0; i < files.length; i++) {
+              const file = files[i];
+              window.preload.createMd5(file).then((md5) => {
+                handleData(file, md5);
+                showResult();
+              });
+            }
+          }
+        });
+
+      document
+        .getElementById("result-close")
+        .addEventListener("click", hideResult);
+      function hideResult() {
+        var el = document.getElementById("result");
+        el.style.display = "none";
+      }
+      function showResult() {
+        var el = document.getElementById("result");
+        el.style.display = "grid";
+      }
+      function clearData() {
+        document.getElementById("result-data").innerHTML = "";
+      }
+      function handleData(path, md5) {
+        var ne = document.createElement("div");
+        ne.classList.add("result-li");
+        ne.title = "点击复制MD5值";
+        ne.innerHTML = `文件：${path}<br/>MD5：${md5}`;
+
+        document.getElementById("result-data").appendChild(ne);
+
+        ne.addEventListener("click", function () {
+          utools.copyText(md5);
+          msg("MD5复制成功");
+        });
+      }
+      function msg(txt) {
+        var notification = document.getElementById("notification");
+        notification.innerHTML = `${txt}`;
+        notification.classList.remove("hidden");
+        setTimeout(() => {
+          notification.classList.add("hidden");
+        }, 1500);
+      }
+    </script>
+  </body>
+</html>
